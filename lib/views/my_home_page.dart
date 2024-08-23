@@ -1,10 +1,5 @@
 import 'package:flutter/material.dart';
-
-import 'my_app.dart';
-
-void main() {
-  runApp(const MyApp());
-}
+import 'package:risknotifier/views/sign_in.dart';
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
@@ -16,12 +11,14 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+  final int _counter = 0;
 
   void _incrementCounter() {
-    setState(() {
-      _counter++;
-    });
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const SignIn(),
+        ));
   }
 
   @override
