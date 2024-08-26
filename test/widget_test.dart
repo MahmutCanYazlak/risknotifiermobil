@@ -8,7 +8,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:risknotifier/main.dart';
 import 'package:risknotifier/my_app.dart';
 
 void main() {

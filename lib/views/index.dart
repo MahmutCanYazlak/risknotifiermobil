@@ -2,7 +2,11 @@ import 'dart:async';
 import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:geocoding/geocoding.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:carousel_slider/carousel_slider.dart';
+import 'package:circle_nav_bar/circle_nav_bar.dart';
+
+import 'circle_navbar.dart';
 
 class IndexPage extends StatefulWidget {
   const IndexPage({super.key});
@@ -13,9 +17,10 @@ class IndexPage extends StatefulWidget {
 
 class _IndexPageState extends State<IndexPage> {
   int _counter = 3;
-  String _statusMessage = "Acil Durum";
-  String _currentAddress = "Adres belirleniyor...";
+  String _statusMessage = "Geri Sayım Başladı";
   Timer? _timer;
+
+  int _currentIndex = 0;
 
   @override
   void initState() {
@@ -25,60 +30,22 @@ class _IndexPageState extends State<IndexPage> {
 
   @override
   void dispose() {
-    _timer?.cancel(); // Timer'ı temizleyin
+    _timer?.cancel();
     super.dispose();
   }
 
   Future<void> _getCurrentLocation() async {
     bool serviceEnabled;
-    LocationPermission permission;
 
     try {
-      // Check if location services are enabled
       serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
         return Future.error('Location services are disabled.');
       }
-
-      // Check for location permissions
-      permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
-        if (permission == LocationPermission.denied) {
-          return Future.error('Location permissions are denied');
-        }
-      }
-
-      if (permission == LocationPermission.deniedForever) {
-        return Future.error(
-            'Location permissions are permanently denied, we cannot request permissions.');
-      }
-
-      // Get the current position
-      Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-      );
-
-      // Convert the position into a readable address
-      List<Placemark> placemarks = await placemarkFromCoordinates(
-        position.latitude,
-        position.longitude,
-      );
-
-      if (placemarks.isNotEmpty) {
-        setState(() {
-          _currentAddress =
-              "${placemarks.first.street}, ${placemarks.first.locality}, ${placemarks.first.country}";
-        });
-      } else {
-        setState(() {
-          _currentAddress = "Adres bulunamadı.";
-        });
-      }
+      await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.high);
     } catch (e) {
-      setState(() {
-        _currentAddress = "Adres bulunamadı: $e";
-      });
+      log("Error getting location: $e");
     }
   }
 
@@ -107,7 +74,7 @@ class _IndexPageState extends State<IndexPage> {
                   });
                   timer.cancel();
                   if (Navigator.of(context).canPop()) {
-                    Navigator.of(context).pop(); // Modal pencereyi kapat
+                    Navigator.of(context).pop();
                   }
                 }
               });
@@ -118,19 +85,16 @@ class _IndexPageState extends State<IndexPage> {
                   Text(
                     'Geri Sayım: $_counter',
                     style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
+                        fontSize: 24, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 20),
                   if (_counter == 0)
                     Text(
                       _statusMessage,
                       style: const TextStyle(
-                        fontSize: 20,
-                        color: Colors.red,
-                        fontWeight: FontWeight.bold,
-                      ),
+                          fontSize: 20,
+                          color: Colors.red,
+                          fontWeight: FontWeight.bold),
                     ),
                 ],
               );
@@ -141,63 +105,144 @@ class _IndexPageState extends State<IndexPage> {
     );
   }
 
+  void _launchURL() async {
+    const url = 'https://earthquake.usgs.gov/earthquakes/map/';
+    if (!await launch(url)) throw 'Could not launch $url';
+  }
+
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
-    log(size.toString());
 
     return Scaffold(
       appBar: AppBar(
         title: const Text("Anasayfa"),
         centerTitle: true,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              _statusMessage,
-              style: TextStyle(
-                fontSize: size.height * 0.04,
-                fontWeight: FontWeight.bold,
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              MaterialButton(
+                onPressed: _startCountdown,
+                color: const Color.fromRGBO(221, 57, 13, 1),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                padding: const EdgeInsets.all(16),
+                textColor: Colors.white,
+                minWidth: double.infinity,
+                child: Text(
+                  'Acil Durum Butonu',
+                  style: TextStyle(fontSize: size.height * 0.02),
+                ),
               ),
-            ),
-            const SizedBox(height: 30),
-            MaterialButton(
-              onPressed: _startCountdown,
-              color: Colors.red,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
+              const SizedBox(height: 30),
+              ElevatedButton(
+                onPressed: _launchURL,
+                child: const Text('Güvenli Yerler ve Deprem Bilgisi'),
               ),
-              padding: const EdgeInsets.all(16),
-              textColor: Colors.white,
-              minWidth: double.infinity,
-              child: Text(
-                'Acil Durum Butonu',
-                style: TextStyle(fontSize: size.height * 0.03),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: () {
+                  // Bilgilendirme ve eğitim içerikleri için navigasyon işlemi
+                },
+                child: const Text('Deprem Eğitim ve Bilgilendirme'),
               ),
-            ),
-            const SizedBox(height: 30),
-            Text(
-              'Adresiniz:',
-              style: TextStyle(
-                fontSize: size.height * 0.03,
-                fontWeight: FontWeight.bold,
+              const SizedBox(height: 15),
+              CarouselSlider(
+                options: CarouselOptions(
+                  autoPlay: true,
+                  aspectRatio: 2.0,
+                  enlargeCenterPage: true,
+                  viewportFraction: 0.9,
+                  height: 305, // Yüksekliği biraz artırdık
+                ),
+                items: [
+                  {
+                    'title': 'Depremden Önce Yapılması Gerekenler',
+                    'items': [
+                      '1. Acil çıkış planlarınızı gözden geçirin.',
+                      '2. Acil çanta hazırlayın.',
+                      '3. Ailenizle iletişim planı yapın.',
+                      '4. Güvenli alanları belirleyin.',
+                      '5. Eğitim ve tatbikatları tamamlayın.'
+                    ]
+                  },
+                  {
+                    'title': 'Deprem Anında Yapılması Gerekenler',
+                    'items': [
+                      '1. Sığınacak yerlere gidin.',
+                      '2. Sert bir masa altına girin.',
+                      '3. Kapı çerçevelerinden uzak durun.',
+                      '4. Pencerelerden ve dış duvarlardan uzak durun.',
+                      '5. Sabitlenmemiş mobilyalardan uzak durun.'
+                    ]
+                  },
+                  {
+                    'title': 'Depremden Sonra Yapılması Gerekenler',
+                    'items': [
+                      '1. Acil durum kitinizi kontrol edin.',
+                      '2. Hasarları kontrol edin.',
+                      '3. Aile iletişim planınızı uygulayın.',
+                      '4. Yanan gaz veya elektrik kaynaklarını kontrol edin.',
+                      '5. İkinci bir deprem için hazırlıklı olun.'
+                    ]
+                  },
+                ].map((slide) {
+                  return Builder(
+                    builder: (BuildContext context) {
+                      return Container(
+                        width: MediaQuery.of(context).size.width,
+                        margin: const EdgeInsets.symmetric(horizontal: 5.0),
+                        decoration: BoxDecoration(
+                          color: Colors.amber.shade200,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(15.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                slide['title'] as String,
+                                style: const TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              ...List<Widget>.from(
+                                (slide['items'] as List<String>).map(
+                                  (item) => Padding(
+                                    padding:
+                                        const EdgeInsets.symmetric(vertical: 2),
+                                    child: Text(
+                                      item,
+                                      style: const TextStyle(fontSize: 16),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  );
+                }).toList(),
               ),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              _currentAddress,
-              style: TextStyle(
-                fontSize: size.height * 0.025,
-                color: Colors.grey[600],
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ],
+            ],
+          ),
         ),
       ),
+      bottomNavigationBar: CircleNavbar(_currentIndex, (index) {
+        setState(() {
+          _currentIndex = index;
+        });
+      }),
     );
   }
 }

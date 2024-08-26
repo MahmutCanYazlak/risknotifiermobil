@@ -1,5 +1,7 @@
 import 'dart:developer';
 import 'package:flutter/material.dart';
+import 'package:risknotifier/views/index.dart';
+import 'package:risknotifier/views/register.dart';
 
 class SignIn extends StatefulWidget {
   const SignIn({super.key});
@@ -83,9 +85,31 @@ class _SignInState extends State<SignIn> with TickerProviderStateMixin {
                   ),
                 ),
                 const SizedBox(height: 24),
+                GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const Register()),
+                    );
+                  },
+                  child: Text(
+                    'Üye Ol',
+                    style: TextStyle(
+                      color: Colors.blue,
+                      fontSize: size.height * 0.018,
+                      decoration: TextDecoration.underline,
+                    ),
+                  ),
+                ),
                 MaterialButton(
-                  onPressed: () {},
-                  color: const Color.fromRGBO(221, 57, 13, 33),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => const IndexPage()),
+                    );
+                  },
+                  color: const Color.fromRGBO(221, 57, 13, 1),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
