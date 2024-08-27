@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:risknotifier/features/riskNotifier/presentation/views/sign_in.dart';
 
-import 'views/my_home_page.dart';
+import 'config/themes/app_themes.dart';
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -9,12 +10,9 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'RiskNotifier',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.black12),
-        useMaterial3: true,
-      ),
+      theme: AppTheme.lightTheme(context),
       debugShowCheckedModeBanner: false,
-      home: const MyHomePage(title: 'RiskNotifier'),
+      home: const SignIn(),
     );
   }
 }
