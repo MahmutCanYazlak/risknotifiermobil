@@ -26,10 +26,23 @@ class _VehicleState extends State<Vehicle> {
     super.dispose();
   }
 
+  bool _isPlateNumberValid(String plateNumber) {
+    // Türkiye plakaları için basit bir doğrulama (örneğin "34 ABC 123" formatı)
+    final plateRegex = RegExp(r'^\d{2} [A-Z]{1,3} \d{1,4}$');
+    return plateRegex.hasMatch(plateNumber);
+  }
+
   void _addVehicle() {
     final String plateNumber = _plateNumberController.text;
 
     if (plateNumber.isNotEmpty && _selectedType != null) {
+      if (!_isPlateNumberValid(plateNumber)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Geçersiz plaka formatı!')),
+        );
+        return;
+      }
+
       setState(() {
         _addedVehicles.add({
           'plate': plateNumber,
@@ -81,10 +94,6 @@ class _VehicleState extends State<Vehicle> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Araç Ekle'),
-        centerTitle: true,
-      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -92,16 +101,50 @@ class _VehicleState extends State<Vehicle> {
           children: [
             TextField(
               controller: _plateNumberController,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Plaka',
-                border: OutlineInputBorder(),
+                labelStyle: const TextStyle(
+                  color: Color.fromARGB(255, 28, 51, 69),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderSide: const BorderSide(
+                    color: Color.fromRGBO(221, 57, 13, 1),
+                  ),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                border: const OutlineInputBorder(),
+                focusedBorder: const OutlineInputBorder(
+                  borderSide: BorderSide(
+                    color: Color.fromRGBO(221, 57, 13, 1),
+                  ),
+                ),
               ),
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
               decoration: const InputDecoration(
                 labelText: 'Türü',
-                border: OutlineInputBorder(),
+                labelStyle: TextStyle(
+                  color: Color.fromARGB(255, 28, 51, 69),
+                ),
+                border: OutlineInputBorder(
+                  borderSide: BorderSide(
+                    color: Color.fromRGBO(221, 57, 13, 1),
+                    width: 2.0,
+                  ),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderSide: BorderSide(
+                    color: Color.fromRGBO(221, 57, 13, 1),
+                    width: 2.0,
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(
+                    color: Color.fromRGBO(221, 57, 13, 1),
+                    width: 2.0,
+                  ),
+                ),
               ),
               value: _selectedType,
               items: _vehicleTypes.map((String type) {
@@ -120,7 +163,19 @@ class _VehicleState extends State<Vehicle> {
             Center(
               child: ElevatedButton(
                 onPressed: _addVehicle,
-                child: const Text('Araç Ekle'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color.fromARGB(255, 28, 51, 69),
+                  foregroundColor: const Color.fromARGB(253, 245, 240, 240),
+                  minimumSize: const Size(double.infinity, 40),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: const Text(
+                  'Araç Ekle',
+                  style: TextStyle(fontSize: 18),
+                ),
               ),
             ),
             const SizedBox(height: 24),
