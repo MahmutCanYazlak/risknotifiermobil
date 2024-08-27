@@ -48,7 +48,7 @@ class _SignInState extends State<SignIn> with TickerProviderStateMixin {
                   child: Align(
                     alignment: Alignment.centerLeft,
                     child: Text(
-                      "Panel Risk Bildirici! 👋",
+                      "Mobil Risk Bildirici! 👋",
                       style: context.textTheme.titleLarge?.copyWith(
                         color: const Color.fromARGB(255, 28, 51, 69),
                       ),
@@ -92,9 +92,8 @@ class _SignInState extends State<SignIn> with TickerProviderStateMixin {
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 10),
                   child: TextField(
-                    obscureText: _isObscure, 
-                    cursorColor:
-                        const Color.fromARGB(255, 28, 51, 69), 
+                    obscureText: _isObscure,
+                    cursorColor: const Color.fromARGB(255, 28, 51, 69),
                     decoration: InputDecoration(
                       labelText: 'Şifre',
                       labelStyle: const TextStyle(
@@ -117,8 +116,7 @@ class _SignInState extends State<SignIn> with TickerProviderStateMixin {
                         ),
                         onPressed: () {
                           setState(() {
-                            _isObscure =
-                                !_isObscure;
+                            _isObscure = !_isObscure;
                           });
                         },
                       ),

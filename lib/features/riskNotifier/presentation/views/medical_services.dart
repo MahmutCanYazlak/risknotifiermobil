@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:circle_nav_bar/circle_nav_bar.dart';
 
 class MedicalServices extends StatefulWidget {
   const MedicalServices({super.key});
@@ -16,8 +15,6 @@ class _MedicalServicesState extends State<MedicalServices> {
   bool _isDiseaseAdded = false;
   String? _addedDisease;
   final List<Map<String, String>> _addedMedicines = [];
-
-  int _currentIndex = 0;
 
   void _addDisease() {
     setState(() {
