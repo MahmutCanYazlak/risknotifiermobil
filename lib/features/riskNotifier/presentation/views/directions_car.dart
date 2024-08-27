@@ -66,6 +66,75 @@ class _VehicleState extends State<Vehicle> {
     }
   }
 
+  void _updateVehicle(int index) {
+    final vehicle = _addedVehicles[index];
+    _plateNumberController.text = vehicle['plate']!;
+    _selectedType = vehicle['type'];
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Aracı Güncelle'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: _plateNumberController,
+                decoration: const InputDecoration(
+                  labelText: 'Plaka',
+                ),
+              ),
+              const SizedBox(height: 16),
+              DropdownButtonFormField<String>(
+                decoration: const InputDecoration(
+                  labelText: 'Türü',
+                ),
+                value: _selectedType,
+                items: _vehicleTypes.map((String type) {
+                  return DropdownMenuItem<String>(
+                    value: type,
+                    child: Text(type),
+                  );
+                }).toList(),
+                onChanged: (newValue) {
+                  setState(() {
+                    _selectedType = newValue;
+                  });
+                },
+              ),
+            ],
+          ),
+          actions: [
+            ElevatedButton(
+              onPressed: () {
+                setState(() {
+                  _addedVehicles[index] = {
+                    'plate': _plateNumberController.text,
+                    'type': _selectedType!,
+                  };
+                });
+                _plateNumberController.clear();
+                _selectedType = null;
+                Navigator.of(context).pop();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Araç başarıyla güncellendi!')),
+                );
+              },
+              child: const Text('Güncelle'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('İptal'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   List<Map<String, String>> _getCurrentPageVehicles() {
     final start = _currentPage * _vehiclesPerPage;
     final end = start + _vehiclesPerPage;
@@ -187,12 +256,15 @@ class _VehicleState extends State<Vehicle> {
                       itemCount: _getCurrentPageVehicles().length,
                       itemBuilder: (context, index) {
                         final vehicle = _getCurrentPageVehicles()[index];
-                        return Card(
-                          margin: const EdgeInsets.symmetric(vertical: 8.0),
-                          elevation: 3,
-                          child: ListTile(
-                            title: Text('Plaka: ${vehicle['plate']}'),
-                            subtitle: Text('Türü: ${vehicle['type']}'),
+                        return GestureDetector(
+                          onTap: () => _updateVehicle(index),
+                          child: Card(
+                            margin: const EdgeInsets.symmetric(vertical: 8.0),
+                            elevation: 3,
+                            child: ListTile(
+                              title: Text('Plaka: ${vehicle['plate']}'),
+                              subtitle: Text('Türü: ${vehicle['type']}'),
+                            ),
                           ),
                         );
                       },
