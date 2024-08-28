@@ -71,14 +71,44 @@ class _MedicalServicesState extends State<MedicalServices> {
             children: [
               TextField(
                 controller: _medicineNameController,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'İlaç Adı',
+                  labelStyle: const TextStyle(
+                    color: Color.fromARGB(255, 28, 51, 69),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderSide: const BorderSide(
+                      color: Color.fromRGBO(221, 57, 13, 1),
+                    ),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  border: const OutlineInputBorder(),
+                  focusedBorder: const OutlineInputBorder(
+                    borderSide: BorderSide(
+                      color: Color.fromRGBO(221, 57, 13, 1),
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Aç mı Tok mu?',
+                  labelStyle: const TextStyle(
+                    color: Color.fromARGB(255, 28, 51, 69),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderSide: const BorderSide(
+                      color: Color.fromRGBO(221, 57, 13, 1),
+                    ),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  border: const OutlineInputBorder(),
+                  focusedBorder: const OutlineInputBorder(
+                    borderSide: BorderSide(
+                      color: Color.fromRGBO(221, 57, 13, 1),
+                    ),
+                  ),
                 ),
                 value: _selectedMealTime,
                 items: ['Aç', 'Tok'].map((String value) {
@@ -95,8 +125,23 @@ class _MedicalServicesState extends State<MedicalServices> {
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Günde Kaç Kere?',
+                  labelStyle: const TextStyle(
+                    color: Color.fromARGB(255, 28, 51, 69),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderSide: const BorderSide(
+                      color: Color.fromRGBO(221, 57, 13, 1),
+                    ),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  border: const OutlineInputBorder(),
+                  focusedBorder: const OutlineInputBorder(
+                    borderSide: BorderSide(
+                      color: Color.fromRGBO(221, 57, 13, 1),
+                    ),
+                  ),
                 ),
                 value: _selectedFrequency,
                 items: ['1', '2', '3', '4'].map((String value) {
@@ -131,12 +176,35 @@ class _MedicalServicesState extends State<MedicalServices> {
                   const SnackBar(content: Text('İlaç başarıyla güncellendi!')),
                 );
               },
+              style: ElevatedButton.styleFrom(
+                backgroundColor:
+                    const Color.fromARGB(255, 28, 51, 69), // Arka plan rengi
+                foregroundColor: Colors.white, // Metin rengi
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                textStyle: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(
+                      10), // Buton kenarlarının yuvarlaklığı
+                ),
+              ),
               child: const Text('Güncelle'),
             ),
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop();
               },
+              style: TextButton.styleFrom(
+                foregroundColor:
+                    const Color.fromARGB(255, 221, 57, 13), // Metin rengi
+                textStyle: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
               child: const Text('İptal'),
             ),
           ],
@@ -192,8 +260,9 @@ class _MedicalServicesState extends State<MedicalServices> {
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                   ),
-                  side:
-                      const BorderSide(color: Color.fromARGB(255, 28, 51, 69)),
+                  side: const BorderSide(
+                    color: Color.fromARGB(255, 28, 51, 69),
+                  ),
                 ),
                 child: const Text('Hastalık Ekle'),
               ),
@@ -210,14 +279,44 @@ class _MedicalServicesState extends State<MedicalServices> {
                 controller: _medicineNameController,
                 decoration: const InputDecoration(
                   labelText: 'İlaç Adı',
+                  labelStyle: TextStyle(
+                    color: Color.fromARGB(255, 28, 51, 69),
+                  ),
                   border: OutlineInputBorder(),
+                  enabledBorder: OutlineInputBorder(
+                    borderSide: BorderSide(
+                      color: Color.fromRGBO(221, 57, 13, 1),
+                    ),
+                    borderRadius: BorderRadius.all(Radius.circular(10)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: BorderSide(
+                      color: Color.fromRGBO(221, 57, 13, 1),
+                    ),
+                    borderRadius: BorderRadius.all(Radius.circular(10)),
+                  ),
                 ),
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
                 decoration: const InputDecoration(
                   labelText: 'Aç mı Tok mu?',
+                  labelStyle: TextStyle(
+                    color: Color.fromARGB(255, 28, 51, 69),
+                  ),
                   border: OutlineInputBorder(),
+                  enabledBorder: OutlineInputBorder(
+                    borderSide: BorderSide(
+                      color: Color.fromRGBO(221, 57, 13, 1),
+                    ),
+                    borderRadius: BorderRadius.all(Radius.circular(10)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: BorderSide(
+                      color: Color.fromRGBO(221, 57, 13, 1),
+                    ),
+                    borderRadius: BorderRadius.all(Radius.circular(10)),
+                  ),
                 ),
                 value: _selectedMealTime,
                 items: ['Aç', 'Tok'].map((String value) {
@@ -239,7 +338,22 @@ class _MedicalServicesState extends State<MedicalServices> {
                 DropdownButtonFormField<String>(
                   decoration: const InputDecoration(
                     labelText: 'Günde Kaç Kere?',
+                    labelStyle: TextStyle(
+                      color: Color.fromARGB(255, 28, 51, 69),
+                    ),
                     border: OutlineInputBorder(),
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(
+                        color: Color.fromRGBO(221, 57, 13, 1),
+                      ),
+                      borderRadius: BorderRadius.all(Radius.circular(10)),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: BorderSide(
+                        color: Color.fromRGBO(221, 57, 13, 1),
+                      ),
+                      borderRadius: BorderRadius.all(Radius.circular(10)),
+                    ),
                   ),
                   value: _selectedFrequency,
                   items: ['1', '2', '3', '4'].map((String value) {
@@ -261,6 +375,24 @@ class _MedicalServicesState extends State<MedicalServices> {
                     _selectedMealTime != null && _selectedFrequency != null
                         ? _addMedicine
                         : null, // Buton seçimsizken devre dışı
+                style: ElevatedButton.styleFrom(
+                  backgroundColor:
+                      _selectedMealTime != null && _selectedFrequency != null
+                          ? const Color.fromARGB(255, 28, 51, 69)
+                          : const Color.fromRGBO(
+                              221, 57, 13, 0.5), // Devre dışı iken farklı renk
+                  foregroundColor: Colors.white,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
+                  textStyle: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  disabledBackgroundColor: const Color.fromRGBO(
+                      221, 57, 13, 0.5), // Devre dışı arka plan rengi
+                  disabledForegroundColor:
+                      Colors.white70, // Devre dışı yazı rengi
+                ),
                 child: const Text('İlaç Ekle'),
               ),
               const SizedBox(height: 24),
