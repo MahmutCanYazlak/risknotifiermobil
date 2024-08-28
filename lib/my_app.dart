@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:risknotifier/features/riskNotifier/presentation/views/sign_in.dart';
-
+import 'package:risknotifier/features/riskNotifier/presentation/widgets/splash_screen.dart';
 import 'config/themes/app_themes.dart';
 
 class MyApp extends StatelessWidget {
@@ -12,7 +11,8 @@ class MyApp extends StatelessWidget {
       title: 'RiskNotifier',
       theme: AppTheme.lightTheme(context),
       debugShowCheckedModeBanner: false,
-      home: const SignIn(),
+      home:
+          const SplashScreen(), // Burada başlangıç sayfasını SplashScreen olarak ayarlayın
     );
   }
 }

@@ -165,8 +165,8 @@ class _HomeState extends State<Home> {
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
     List<Widget> bodyItems = [
-      SearchScreen(), // Arama sayfası buraya eklendi
-      const ProfileEditPage(), // Boş ekran yerine ProfileEditPage eklendi
+      const SearchScreen(),
+      const ProfileEditPage(),
       SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(20.0),

@@ -170,6 +170,7 @@ class _VehicleState extends State<Vehicle> {
           children: [
             TextField(
               controller: _plateNumberController,
+              cursorColor: const Color.fromARGB(255, 28, 51, 69),
               decoration: InputDecoration(
                 labelText: 'Plaka',
                 labelStyle: const TextStyle(
@@ -177,6 +178,7 @@ class _VehicleState extends State<Vehicle> {
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderSide: const BorderSide(
+                    width: 1,
                     color: Color.fromRGBO(221, 57, 13, 1),
                   ),
                   borderRadius: BorderRadius.circular(10),
@@ -184,6 +186,7 @@ class _VehicleState extends State<Vehicle> {
                 border: const OutlineInputBorder(),
                 focusedBorder: const OutlineInputBorder(
                   borderSide: BorderSide(
+                    width: 1,
                     color: Color.fromRGBO(221, 57, 13, 1),
                   ),
                 ),
@@ -191,27 +194,28 @@ class _VehicleState extends State<Vehicle> {
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Türü',
-                labelStyle: TextStyle(
+                labelStyle: const TextStyle(
                   color: Color.fromARGB(255, 28, 51, 69),
                 ),
-                border: OutlineInputBorder(
+                border: const OutlineInputBorder(
                   borderSide: BorderSide(
                     color: Color.fromRGBO(221, 57, 13, 1),
-                    width: 2.0,
+                    width: 1.0,
                   ),
                 ),
                 enabledBorder: OutlineInputBorder(
-                  borderSide: BorderSide(
+                  borderSide: const BorderSide(
                     color: Color.fromRGBO(221, 57, 13, 1),
-                    width: 2.0,
+                    width: 1.0,
                   ),
+                  borderRadius: BorderRadius.circular(10),
                 ),
-                focusedBorder: OutlineInputBorder(
+                focusedBorder: const OutlineInputBorder(
                   borderSide: BorderSide(
                     color: Color.fromRGBO(221, 57, 13, 1),
-                    width: 2.0,
+                    width: 1.0,
                   ),
                 ),
               ),

@@ -1,8 +1,11 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 class SearchScreen extends StatefulWidget {
+  const SearchScreen({super.key});
+
   @override
   _EarthquakeScreenState createState() => _EarthquakeScreenState();
 }
@@ -25,7 +28,9 @@ class _EarthquakeScreenState extends State<SearchScreen> {
         earthquakes = data['result'];
       });
     } else {
-      print('Failed to load earthquake data');
+      if (kDebugMode) {
+        print('Failed to load earthquake data');
+      }
     }
   }
 
@@ -33,7 +38,7 @@ class _EarthquakeScreenState extends State<SearchScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: earthquakes.isEmpty
-          ? Center(child: Text('Son depremler bulunamadı'))
+          ? const Center(child: Text('Son depremler bulunamadı'))
           : ListView.builder(
               itemCount: earthquakes.length,
               itemBuilder: (context, index) {
@@ -49,4 +54,4 @@ class _EarthquakeScreenState extends State<SearchScreen> {
   }
 }
 
-void main() => runApp(MaterialApp(home: SearchScreen()));
+void main() => runApp(const MaterialApp(home: SearchScreen()));
