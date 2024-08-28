@@ -6,7 +6,6 @@ import 'package:risknotifier/features/riskNotifier/presentation/views/directions
 import 'package:risknotifier/features/riskNotifier/presentation/views/emergency_kit_modal.dart';
 import 'package:risknotifier/features/riskNotifier/presentation/views/post_earthquake_help_modal.dart';
 import 'package:risknotifier/features/riskNotifier/presentation/views/profile_edit.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/cupertino.dart'; // Cupertino widgets için eklendi
 import '../widgets/circle_navbar.dart';
