@@ -153,7 +153,7 @@ class AppTheme {
             fontSize: context.dynamicHeight(0.017),
           ),
         ),
-        colorScheme:
-            ColorScheme.fromSwatch().copyWith(secondary: Colors.blueAccent),
+        colorScheme: ColorScheme.fromSwatch()
+            .copyWith(secondary: const Color.fromRGBO(221, 57, 13, 1)),
       );
 }

@@ -3,6 +3,9 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:risknotifier/features/riskNotifier/presentation/views/directions_car.dart';
+import 'package:risknotifier/features/riskNotifier/presentation/views/emergency_kit_modal.dart';
+import 'package:risknotifier/features/riskNotifier/presentation/views/post_earthquake_help_modal.dart';
+import 'package:risknotifier/features/riskNotifier/presentation/views/profile_edit.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/cupertino.dart'; // Cupertino widgets için eklendi
@@ -159,29 +162,12 @@ class _HomeState extends State<Home> {
     );
   }
 
-  void _launchURL() async {
-    const url = 'https://earthquake.usgs.gov/earthquakes/map/';
-    // ignore: deprecated_member_use
-    if (!await launch(url)) throw 'Could not launch $url';
-  }
-
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
     List<Widget> bodyItems = [
-      const SearchPage(), // Arama sayfası buraya eklendi
-      Container(
-        color: const Color.fromARGB(255, 230, 230, 230),
-        child: Center(
-          child: Text(
-            'Bu sayfa şu anda boş.',
-            style: TextStyle(
-              fontSize: size.height * 0.025,
-              color: const Color.fromARGB(255, 28, 51, 69),
-            ),
-          ),
-        ),
-      ),
+      SearchScreen(), // Arama sayfası buraya eklendi
+      const ProfileEditPage(), // Boş ekran yerine ProfileEditPage eklendi
       SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(20.0),
@@ -204,15 +190,51 @@ class _HomeState extends State<Home> {
               ),
               const SizedBox(height: 30),
               ElevatedButton(
-                onPressed: _launchURL,
-                child: const Text('Güvenli Yerler ve Deprem Bilgisi'),
+                onPressed: () {
+                  showModalBottomSheet(
+                    context: context,
+                    shape: const RoundedRectangleBorder(
+                      borderRadius:
+                          BorderRadius.vertical(top: Radius.circular(20)),
+                    ),
+                    builder: (BuildContext context) {
+                      return const PostEarthquakeHelpModal();
+                    },
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  backgroundColor: const Color.fromARGB(255, 28, 51, 69),
+                  textStyle: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                child: const Text('Deprem Sonrası Bilgilendirme'),
               ),
               const SizedBox(height: 20),
               ElevatedButton(
                 onPressed: () {
-                  // Bilgilendirme ve eğitim içerikleri için navigasyon işlemi
+                  showModalBottomSheet(
+                    context: context,
+                    shape: const RoundedRectangleBorder(
+                      borderRadius:
+                          BorderRadius.vertical(top: Radius.circular(20)),
+                    ),
+                    builder: (BuildContext context) {
+                      return const EmergencyKitModal();
+                    },
+                  );
                 },
-                child: const Text('Deprem Eğitim ve Bilgilendirme'),
+                style: ElevatedButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  backgroundColor: const Color.fromARGB(255, 28, 51, 69),
+                  textStyle: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                child: const Text('Afet Çantasında Olması Gerekenler'),
               ),
               const SizedBox(height: 20),
               CarouselSlider(
@@ -221,7 +243,7 @@ class _HomeState extends State<Home> {
                   aspectRatio: 2.0,
                   enlargeCenterPage: true,
                   viewportFraction: 0.9,
-                  height: 300,
+                  height: 350,
                 ),
                 items: [
                   {

@@ -13,8 +13,20 @@ class _MedicalServicesState extends State<MedicalServices> {
   String? _selectedMealTime;
   String? _selectedFrequency;
   bool _isDiseaseAdded = false;
+  bool _isDiseaseNameEmpty = true;
   String? _addedDisease;
   final List<Map<String, String>> _addedMedicines = [];
+
+  @override
+  void initState() {
+    super.initState();
+
+    _diseaseController.addListener(() {
+      setState(() {
+        _isDiseaseNameEmpty = _diseaseController.text.isEmpty;
+      });
+    });
+  }
 
   void _addDisease() {
     setState(() {
@@ -26,7 +38,6 @@ class _MedicalServicesState extends State<MedicalServices> {
   void _addMedicine() {
     final String medicineName = _medicineNameController.text;
 
-    // Yeni ilaç bilgisini listeye ekle
     if (medicineName.isNotEmpty &&
         _selectedMealTime != null &&
         _selectedFrequency != null) {
@@ -38,7 +49,6 @@ class _MedicalServicesState extends State<MedicalServices> {
         });
       });
 
-      // Formu sıfırla
       _medicineNameController.clear();
       _selectedMealTime = null;
       _selectedFrequency = null;
@@ -174,7 +184,17 @@ class _MedicalServicesState extends State<MedicalServices> {
               ),
               const SizedBox(height: 16),
               ElevatedButton(
-                onPressed: _addDisease,
+                onPressed: _isDiseaseNameEmpty ? null : _addDisease,
+                style: ElevatedButton.styleFrom(
+                  foregroundColor: const Color.fromARGB(255, 28, 51, 69),
+                  backgroundColor: Colors.white,
+                  textStyle: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  side:
+                      const BorderSide(color: Color.fromARGB(255, 28, 51, 69)),
+                ),
                 child: const Text('Hastalık Ekle'),
               ),
             ] else ...[
