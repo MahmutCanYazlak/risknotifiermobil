@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -17,12 +19,41 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
   final ImagePicker _picker = ImagePicker();
 
   Future<void> _pickImage() async {
-    final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
-    if (pickedFile != null) {
-      setState(() {
-        _profileImage = pickedFile;
-      });
-    }
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Resim Seç"),
+        content: const Text("Resmi nereden almak istiyorsunuz?"),
+        actions: <Widget>[
+          TextButton(
+            child: const Text("Kamera"),
+            onPressed: () async {
+              Navigator.of(context).pop();
+              final pickedFile =
+                  await _picker.pickImage(source: ImageSource.camera);
+              if (pickedFile != null) {
+                setState(() {
+                  _profileImage = pickedFile;
+                });
+              }
+            },
+          ),
+          TextButton(
+            child: const Text("Galeri"),
+            onPressed: () async {
+              Navigator.of(context).pop();
+              final pickedFile =
+                  await _picker.pickImage(source: ImageSource.gallery);
+              if (pickedFile != null) {
+                setState(() {
+                  _profileImage = pickedFile;
+                });
+              }
+            },
+          ),
+        ],
+      ),
+    );
   }
 
   void _saveProfile() {
@@ -54,7 +85,7 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
                 radius: 60,
                 backgroundColor: const Color.fromARGB(255, 28, 51, 69),
                 backgroundImage: _profileImage != null
-                    ? FileImage(_profileImage as dynamic)
+                    ? FileImage(File(_profileImage!.path))
                     : null,
                 child: _profileImage == null
                     ? const Icon(Icons.camera_alt,
