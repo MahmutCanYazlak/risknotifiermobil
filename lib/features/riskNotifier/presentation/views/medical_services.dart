@@ -245,6 +245,42 @@ class _MedicalServicesState extends State<MedicalServices> {
     }
   }
 
+  Future<void> _deleteDisease(int diseaseId) async {
+    final token = await _storage.read(key: 'auth_token');
+
+    try {
+      final client = await _getHttpClient();
+
+      final response = await client.delete(
+        Uri.parse('https://risknotifier.com/api/mobil/health/$diseaseId'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        setState(() {
+          _diseases.removeWhere((disease) => disease['id'] == diseaseId);
+          _selectedDiseaseId = null;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Hastalık başarıyla silindi!')),
+          );
+        });
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Hastalık silinirken bir hata oluştu.')),
+        );
+      }
+    } catch (e) {
+      print('Hata: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text('Bir hata oluştu. Lütfen tekrar deneyin.')),
+      );
+    }
+  }
+
   void _editDisease(Map<String, dynamic> disease) {
     setState(() {
       _selectedDiseaseId = disease['id'];
@@ -256,7 +292,7 @@ class _MedicalServicesState extends State<MedicalServices> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Hastalık Güncelle'),
+          title: const Text('Hastalık Güncelle veya Sil'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -309,6 +345,13 @@ class _MedicalServicesState extends State<MedicalServices> {
                 _updateDisease(_selectedDiseaseId!);
               },
               child: const Text('Güncelle'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                _deleteDisease(_selectedDiseaseId!);
+              },
+              child: const Text('Sil'),
             ),
             TextButton(
               onPressed: () {
