@@ -149,10 +149,13 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            const CircleAvatar(
-              radius: 60,
-              backgroundColor: Color.fromARGB(255, 28, 51, 69),
-              backgroundImage: AssetImage('assets/images/logo.png'),
+            ClipOval(
+              child: Image.asset(
+                'assets/images/logo.png',
+                width: 120, // Resim genişliği
+                height: 120, // Resim yüksekliği
+                fit: BoxFit.cover, // Resmin tamamını kapsayacak şekilde ayarla
+              ),
             ),
             const SizedBox(height: 20),
             TextField(
