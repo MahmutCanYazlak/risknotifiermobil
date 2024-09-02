@@ -1,7 +1,9 @@
+import 'dart:convert';
 import 'dart:io';
-
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
+import 'package:dio/io.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart'; // Secure Storage'ı import edin
 
 class ProfileEditPage extends StatefulWidget {
   const ProfileEditPage({super.key});
@@ -12,62 +14,130 @@ class ProfileEditPage extends StatefulWidget {
 
 class _ProfileEditPageState extends State<ProfileEditPage> {
   final _nameController = TextEditingController();
-  final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
-  XFile? _profileImage;
+  final _genderController = TextEditingController();
+  final _tcNumberController = TextEditingController();
+  final _birthDateController = TextEditingController();
 
-  final ImagePicker _picker = ImagePicker();
+  final _storage = const FlutterSecureStorage(); // Secure Storage instance'ı
 
-  Future<void> _pickImage() async {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text("Resim Seç"),
-        content: const Text("Resmi nereden almak istiyorsunuz?"),
-        actions: <Widget>[
-          TextButton(
-            child: const Text("Kamera"),
-            onPressed: () async {
-              Navigator.of(context).pop();
-              final pickedFile =
-                  await _picker.pickImage(source: ImageSource.camera);
-              if (pickedFile != null) {
-                setState(() {
-                  _profileImage = pickedFile;
-                });
-              }
-            },
-          ),
-          TextButton(
-            child: const Text("Galeri"),
-            onPressed: () async {
-              Navigator.of(context).pop();
-              final pickedFile =
-                  await _picker.pickImage(source: ImageSource.gallery);
-              if (pickedFile != null) {
-                setState(() {
-                  _profileImage = pickedFile;
-                });
-              }
-            },
-          ),
-        ],
-      ),
-    );
+  String? _selectedBloodType; // Seçilen kan grubu için değişken
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchUserProfile();
   }
 
-  void _saveProfile() {
-    // Burada profil bilgilerini kaydetmek için gerekli işlemleri yapabilirsiniz
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Profil bilgileri güncellendi!')),
-    );
+  Future<String?> _getToken() async {
+    return await _storage.read(key: 'auth_token'); // Token'ı storage'dan oku
+  }
+
+  Future<void> _fetchUserProfile() async {
+    var dio = Dio();
+    // ignore: deprecated_member_use
+    (dio.httpClientAdapter as IOHttpClientAdapter).onHttpClientCreate =
+        (client) {
+      client.badCertificateCallback =
+          (X509Certificate cert, String host, int port) => true;
+      return client;
+    };
+
+    try {
+      var token = await _getToken(); // Token'ı al
+
+      if (token == null) {
+        throw Exception('Token bulunamadı');
+      }
+
+      var response = await dio.get(
+        'https://risknotifier.com/api/mobil',
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $token',
+          },
+          responseType: ResponseType
+              .plain, // Yanıtın plain text olup olmadığını kontrol edin
+        ),
+      );
+      if (response.statusCode == 200) {
+        var data = jsonDecode(response.data); // JSON formatında ise işleme
+        var userData = data['data'][0]; // Giriş yapan kullanıcının bilgileri
+
+        _nameController.text = userData['name'] ?? '';
+        _phoneController.text = userData['phone'] ?? '';
+        _genderController.text = userData['gender'] ?? '';
+        _tcNumberController.text = userData['tc_number'] ?? '';
+        _selectedBloodType = userData['blood_type'] ?? '';
+        _birthDateController.text = userData['birth_date'] ?? '';
+
+        setState(() {}); // Seçilen kan grubunu güncellemek için
+      } else {
+        throw Exception('Failed to load user profile');
+      }
+    } catch (e) {
+      // ignore: use_build_context_synchronously
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Profil bilgileri yüklenemedi: $e')),
+      );
+    }
+  }
+
+  Future<void> _updateUserProfile() async {
+    var dio = Dio();
+    // ignore: deprecated_member_use
+    (dio.httpClientAdapter as IOHttpClientAdapter).onHttpClientCreate =
+        (client) {
+      client.badCertificateCallback =
+          (X509Certificate cert, String host, int port) => true;
+      return client;
+    };
+
+    try {
+      var token = await _getToken(); // Token'ı al
+
+      if (token == null) {
+        throw Exception('Token bulunamadı');
+      }
+
+      var response = await dio.post(
+        'https://risknotifier.com/api/mobil/guest',
+        data: FormData.fromMap({
+          'name': _nameController.text,
+          'phone': _phoneController.text,
+          'gender': _genderController.text,
+          'tc_number': _tcNumberController.text,
+          'blood_type': _selectedBloodType,
+          'birth_date': _birthDateController.text,
+        }),
+        options: Options(headers: {
+          'Authorization': 'Bearer $token'
+        }), // Token burada kullanılıyor
+      );
+
+      if (response.statusCode == 200) {
+        // ignore: use_build_context_synchronously
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Profil güncellendi!')),
+        );
+      } else {
+        throw Exception('Failed to update profile');
+      }
+    } catch (e) {
+      // ignore: use_build_context_synchronously
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Profil güncellenemedi: $e')),
+      );
+    }
   }
 
   @override
   void dispose() {
     _nameController.dispose();
-    _emailController.dispose();
     _phoneController.dispose();
+    _genderController.dispose();
+    _tcNumberController.dispose();
+    _birthDateController.dispose();
     super.dispose();
   }
 
@@ -79,61 +149,26 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            GestureDetector(
-              onTap: _pickImage,
-              child: CircleAvatar(
-                radius: 60,
-                backgroundColor: const Color.fromARGB(255, 28, 51, 69),
-                backgroundImage: _profileImage != null
-                    ? FileImage(File(_profileImage!.path))
-                    : null,
-                child: _profileImage == null
-                    ? const Icon(Icons.camera_alt,
-                        size: 40, color: Colors.white)
-                    : null,
-              ),
+            const CircleAvatar(
+              radius: 60,
+              backgroundColor: Color.fromARGB(255, 28, 51, 69),
+              backgroundImage: AssetImage('assets/images/logo.png'),
             ),
             const SizedBox(height: 20),
             TextField(
               controller: _nameController,
               decoration: InputDecoration(
                 labelText: 'Ad',
-                labelStyle: const TextStyle(
-                  color: Color.fromARGB(255, 28, 51, 69),
-                ),
+                labelStyle:
+                    const TextStyle(color: Color.fromARGB(255, 28, 51, 69)),
                 enabledBorder: OutlineInputBorder(
-                  borderSide: const BorderSide(
-                    color: Color.fromRGBO(221, 57, 13, 1),
-                  ),
+                  borderSide:
+                      const BorderSide(color: Color.fromRGBO(221, 57, 13, 1)),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 border: const OutlineInputBorder(),
                 focusedBorder: const OutlineInputBorder(
-                  borderSide: BorderSide(
-                    color: Color.fromRGBO(221, 57, 13, 1),
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
-            TextField(
-              controller: _emailController,
-              decoration: InputDecoration(
-                labelText: 'Soyad',
-                labelStyle: const TextStyle(
-                  color: Color.fromARGB(255, 28, 51, 69),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderSide: const BorderSide(
-                    color: Color.fromRGBO(221, 57, 13, 1),
-                  ),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                border: const OutlineInputBorder(),
-                focusedBorder: const OutlineInputBorder(
-                  borderSide: BorderSide(
-                    color: Color.fromRGBO(221, 57, 13, 1),
-                  ),
+                  borderSide: BorderSide(color: Color.fromRGBO(221, 57, 13, 1)),
                 ),
               ),
             ),
@@ -142,37 +177,115 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
               controller: _phoneController,
               decoration: InputDecoration(
                 labelText: 'Telefon Numarası',
-                labelStyle: const TextStyle(
-                  color: Color.fromARGB(255, 28, 51, 69),
-                ),
+                labelStyle:
+                    const TextStyle(color: Color.fromARGB(255, 28, 51, 69)),
                 enabledBorder: OutlineInputBorder(
-                  borderSide: const BorderSide(
-                    color: Color.fromRGBO(221, 57, 13, 1),
-                  ),
+                  borderSide:
+                      const BorderSide(color: Color.fromRGBO(221, 57, 13, 1)),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 border: const OutlineInputBorder(),
                 focusedBorder: const OutlineInputBorder(
-                  borderSide: BorderSide(
-                    color: Color.fromRGBO(221, 57, 13, 1),
-                  ),
+                  borderSide: BorderSide(color: Color.fromRGBO(221, 57, 13, 1)),
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            TextField(
+              controller: _genderController,
+              decoration: InputDecoration(
+                labelText: 'Cinsiyet',
+                labelStyle:
+                    const TextStyle(color: Color.fromARGB(255, 28, 51, 69)),
+                enabledBorder: OutlineInputBorder(
+                  borderSide:
+                      const BorderSide(color: Color.fromRGBO(221, 57, 13, 1)),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                border: const OutlineInputBorder(),
+                focusedBorder: const OutlineInputBorder(
+                  borderSide: BorderSide(color: Color.fromRGBO(221, 57, 13, 1)),
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            TextField(
+              controller: _tcNumberController,
+              decoration: InputDecoration(
+                labelText: 'TC Kimlik Numarası',
+                labelStyle:
+                    const TextStyle(color: Color.fromARGB(255, 28, 51, 69)),
+                enabledBorder: OutlineInputBorder(
+                  borderSide:
+                      const BorderSide(color: Color.fromRGBO(221, 57, 13, 1)),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                border: const OutlineInputBorder(),
+                focusedBorder: const OutlineInputBorder(
+                  borderSide: BorderSide(color: Color.fromRGBO(221, 57, 13, 1)),
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            DropdownButtonFormField<String>(
+              value: _selectedBloodType,
+              onChanged: (newValue) {
+                setState(() {
+                  _selectedBloodType = newValue;
+                });
+              },
+              decoration: InputDecoration(
+                labelText: 'Kan Grubu',
+                labelStyle:
+                    const TextStyle(color: Color.fromARGB(255, 28, 51, 69)),
+                enabledBorder: OutlineInputBorder(
+                  borderSide:
+                      const BorderSide(color: Color.fromRGBO(221, 57, 13, 1)),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                border: const OutlineInputBorder(),
+                focusedBorder: const OutlineInputBorder(
+                  borderSide: BorderSide(color: Color.fromRGBO(221, 57, 13, 1)),
+                ),
+              ),
+              items: <String>['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', '0+', '0-']
+                  .map<DropdownMenuItem<String>>((String value) {
+                return DropdownMenuItem<String>(
+                  value: value,
+                  child: Text(value),
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 20),
+            TextField(
+              controller: _birthDateController,
+              decoration: InputDecoration(
+                labelText: 'Doğum Tarihi',
+                labelStyle:
+                    const TextStyle(color: Color.fromARGB(255, 28, 51, 69)),
+                enabledBorder: OutlineInputBorder(
+                  borderSide:
+                      const BorderSide(color: Color.fromRGBO(221, 57, 13, 1)),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                border: const OutlineInputBorder(),
+                focusedBorder: const OutlineInputBorder(
+                  borderSide: BorderSide(color: Color.fromRGBO(221, 57, 13, 1)),
                 ),
               ),
             ),
             const SizedBox(height: 30),
             ElevatedButton(
-              onPressed: _saveProfile,
+              onPressed: _updateUserProfile,
               style: ElevatedButton.styleFrom(
                 foregroundColor: Colors.white,
                 backgroundColor: const Color.fromARGB(255, 28, 51, 69),
                 padding:
                     const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
-                textStyle: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
+                textStyle:
+                    const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
-              child: const Text('Profili Kaydet'),
+              child: const Text('Profili Güncelle'),
             ),
           ],
         ),

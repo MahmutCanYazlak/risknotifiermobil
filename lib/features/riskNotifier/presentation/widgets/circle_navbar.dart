@@ -15,7 +15,7 @@ Widget CircleNavbar(int currentIndex, Function(int) onTap) {
     inactiveIcons: const [
       DefaultTextStyle(
         style: TextStyle(color: Colors.white),
-        child: Text("AFAD"),
+        child: Text("Çıkış"),
       ),
       DefaultTextStyle(
         style: TextStyle(color: Colors.white),

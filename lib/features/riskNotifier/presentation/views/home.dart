@@ -7,10 +7,12 @@ import 'package:risknotifier/features/riskNotifier/presentation/views/emergency_
 import 'package:risknotifier/features/riskNotifier/presentation/views/post_earthquake_help_modal.dart';
 import 'package:risknotifier/features/riskNotifier/presentation/views/profile_edit.dart';
 import 'package:carousel_slider/carousel_slider.dart';
-import 'package:flutter/cupertino.dart'; // Cupertino widgets için eklendi
+import 'package:flutter/cupertino.dart';
+import 'package:risknotifier/features/riskNotifier/presentation/views/sign_in.dart';
 import '../widgets/circle_navbar.dart';
 import 'medical_services.dart';
-import 'search.dart'; // SearchPage'in import edilmesi
+import 'search.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -23,16 +25,72 @@ class _HomeState extends State<Home> {
   int _counter = 3;
   String _statusMessage = "Geri Sayım Başladı";
   Timer? _timer;
-  int _currentIndex = 2; // Başlangıçta Ana Sayfa olarak ayarladım.
-  int _switchValue = 0; // Switch'in varsayılan değeri ortada (belirsiz).
+  int _currentIndex = 2;
+  int _switchValue = 0;
 
   final List<String> titles = [
-    'Arama',
+    'Çıkış',
     'Profil',
     'Ana Sayfa',
     'İlaç Ekle',
     'Araç Ekle',
   ];
+  void _showSignOutConfirmation(BuildContext context) async {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Çıkış Yap'),
+          content: Column(
+            mainAxisSize: MainAxisSize
+                .min, // İçeriğin mümkün olduğunca küçük olmasını sağlar
+            children: <Widget>[
+              Image.asset(
+                'assets/images/logo.png',
+                width: 100, // Logo genişliği
+                height: 100, // Logo yüksekliği
+              ), // Logo resmi
+              const SizedBox(height: 20), // Resim ile metin arasında boşluk
+              const Text('Çıkış yapmak istediğinize emin misiniz?'),
+            ],
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Diyalogu kapat
+              },
+              style: TextButton.styleFrom(
+                foregroundColor:
+                    const Color.fromRGBO(221, 57, 13, 1), // Buton metin rengi
+              ),
+              child: const Text('Hayır',
+                  style: TextStyle(color: Color.fromRGBO(221, 57, 13, 1))),
+            ),
+            TextButton(
+              onPressed: () async {
+                // SharedPreferences'dan token'ı temizle
+                SharedPreferences prefs = await SharedPreferences.getInstance();
+                await prefs.remove('token');
+                // Giriş sayfasına yönlendir
+                Navigator.pushAndRemoveUntil(
+                  // ignore: use_build_context_synchronously
+                  context,
+                  MaterialPageRoute(builder: (context) => const SignIn()),
+                  (Route<dynamic> route) => false,
+                );
+              },
+              style: TextButton.styleFrom(
+                foregroundColor:
+                    const Color.fromRGBO(221, 57, 13, 1), // Buton metin rengi
+              ),
+              child: const Text('Evet',
+                  style: TextStyle(color: Color.fromARGB(255, 28, 51, 69))),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   @override
   void initState() {
@@ -84,8 +142,6 @@ class _HomeState extends State<Home> {
                     _statusMessage = "Bitti";
                   });
                   timer.cancel();
-
-                  // Eğer switch değeri belirsizde kalırsa, "Yardıma İhtiyacım Var" olarak ayarla
                   if (_switchValue == 0) {
                     _switchValue = 2;
                   }
@@ -110,7 +166,7 @@ class _HomeState extends State<Home> {
                     thumbColor: _switchValue == 1
                         ? Colors.green
                         : _switchValue == 2
-                            ? Colors.red
+                            ? const Color.fromRGBO(221, 57, 13, 1)
                             : Colors.grey.shade400,
                     groupValue: _switchValue,
                     children: const <int, Widget>{
@@ -127,14 +183,13 @@ class _HomeState extends State<Home> {
                       2: Padding(
                         padding: EdgeInsets.symmetric(vertical: 10),
                         child: Text('Yardıma İhtiyacım Var',
-                            style: TextStyle(color: Colors.red)),
+                            style: TextStyle(
+                                color: Color.fromRGBO(221, 57, 13, 1))),
                       ),
                     },
                     onValueChanged: (int? value) {
                       setState(() {
                         _switchValue = value!;
-
-                        // Eğer "Güvendeyim" seçilirse, ekranı kapat ve anasayfada kal
                         if (_switchValue == 1) {
                           if (Navigator.of(context).canPop()) {
                             Navigator.of(context).pop();
@@ -149,7 +204,7 @@ class _HomeState extends State<Home> {
                       _statusMessage,
                       style: const TextStyle(
                           fontSize: 20,
-                          color: Colors.red,
+                          color: Color.fromRGBO(221, 57, 13, 1),
                           fontWeight: FontWeight.bold),
                     ),
                 ],
@@ -175,7 +230,7 @@ class _HomeState extends State<Home> {
             children: [
               MaterialButton(
                 onPressed: _startCountdown,
-                color: Colors.red,
+                color: const Color.fromRGBO(221, 57, 13, 1),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
@@ -323,7 +378,7 @@ class _HomeState extends State<Home> {
         ),
       ),
       const MedicalServices(),
-      const Vehicle(), // DirectionsCar sayfasını buraya ekleyin
+      const Vehicle(),
     ];
 
     return Scaffold(
@@ -335,7 +390,7 @@ class _HomeState extends State<Home> {
           },
         ),
         title: Text(
-          titles[_currentIndex], // Her sayfa değişiminde başlığı güncelle
+          titles[_currentIndex],
           style: const TextStyle(
             color: Color.fromARGB(255, 28, 51, 69),
             fontSize: 20,
@@ -348,9 +403,14 @@ class _HomeState extends State<Home> {
       bottomNavigationBar: CircleNavbar(
         _currentIndex,
         (index) {
-          setState(() {
-            _currentIndex = index;
-          });
+          if (index == 0) {
+            // Assuming the 'Çıkış' tab is at index 0
+            _showSignOutConfirmation(context);
+          } else {
+            setState(() {
+              _currentIndex = index;
+            });
+          }
         },
       ),
     );

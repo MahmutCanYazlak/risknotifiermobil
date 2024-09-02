@@ -1,5 +1,9 @@
 import 'dart:developer';
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:http/io_client.dart';
+import 'dart:convert';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:risknotifier/config/extensions/context_extension.dart';
 import 'package:risknotifier/features/riskNotifier/presentation/views/home.dart';
 
@@ -17,11 +21,71 @@ class _SignInState extends State<SignIn> with TickerProviderStateMixin {
   )..repeat();
 
   bool _isObscure = true; // Şifreyi gizlemek/göstermek için kullanılan değişken
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+
+  // Flutter Secure Storage instance
+  final storage = const FlutterSecureStorage();
 
   @override
   void dispose() {
     _controller.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
     super.dispose();
+  }
+
+  Future<void> _login() async {
+    HttpClient httpClient = HttpClient()
+      ..badCertificateCallback =
+          ((X509Certificate cert, String host, int port) => true);
+    IOClient ioClient = IOClient(httpClient);
+
+    try {
+      var response = await ioClient.post(
+        Uri.parse('https://risknotifier.com/api/login'),
+        body: {
+          'email': _emailController.text,
+          'password': _passwordController.text,
+        },
+      );
+
+      if (response.statusCode == 200) {
+        var responseData = json.decode(response.body);
+        var token = responseData['token']; // Token'ı response'dan al
+
+        // Token'ı Flutter Secure Storage ile sakla
+        await storage.write(key: 'auth_token', value: token);
+
+        Navigator.pushReplacement(
+          // ignore: use_build_context_synchronously
+          context,
+          MaterialPageRoute(builder: (context) => const Home()),
+        );
+      } else {
+        var responseData = json.decode(response.body);
+        var errorMessage = responseData['message'] ??
+            'Giriş başarısız, bilgilerinizi kontrol edin.';
+        // ignore: use_build_context_synchronously
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(errorMessage),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      // ignore: use_build_context_synchronously
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Bir hata oluştu, lütfen tekrar deneyiniz.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      httpClient.close();
+      ioClient.close();
+    }
   }
 
   @override
@@ -68,8 +132,8 @@ class _SignInState extends State<SignIn> with TickerProviderStateMixin {
                   ),
                 ),
                 TextField(
-                  cursorColor:
-                      const Color.fromARGB(255, 28, 51, 69), // İmleç rengi
+                  controller: _emailController,
+                  cursorColor: const Color.fromARGB(255, 28, 51, 69),
                   decoration: InputDecoration(
                     labelText: 'Email',
                     labelStyle: const TextStyle(
@@ -92,6 +156,7 @@ class _SignInState extends State<SignIn> with TickerProviderStateMixin {
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 10),
                   child: TextField(
+                    controller: _passwordController,
                     obscureText: _isObscure,
                     cursorColor: const Color.fromARGB(255, 28, 51, 69),
                     decoration: InputDecoration(
@@ -124,12 +189,7 @@ class _SignInState extends State<SignIn> with TickerProviderStateMixin {
                   ),
                 ),
                 MaterialButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const Home()),
-                    );
-                  },
+                  onPressed: _login,
                   color: const Color.fromRGBO(221, 57, 13, 1),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
