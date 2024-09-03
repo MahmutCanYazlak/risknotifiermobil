@@ -73,7 +73,7 @@ class _FamilyScreenState extends State<FamilyScreen> {
           // Güncelleme işlemi için URL'yi ID ile birlikte oluşturuyoruz
           var url = Uri.parse(
               'https://risknotifier.com/api/mobil/relative/$_editingRelativeId');
-          request = http.MultipartRequest('PUT', url);
+          request = http.MultipartRequest('POST', url);
         } else {
           // Yeni kayıt ekleme işlemi
           var url = Uri.parse('https://risknotifier.com/api/mobil/relative');

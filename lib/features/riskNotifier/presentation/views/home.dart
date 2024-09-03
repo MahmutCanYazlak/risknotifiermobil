@@ -104,12 +104,12 @@ class _HomeState extends State<Home> {
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Çıkış işlemi başarısız oldu')),
+          const SnackBar(content: Text('Çıkış işlemi başarısız oldu')),
         );
       }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: const Text('Token bulunamadı')),
+        const SnackBar(content: Text('Token bulunamadı')),
       );
     }
   }

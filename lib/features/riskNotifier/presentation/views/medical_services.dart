@@ -86,7 +86,7 @@ class _MedicalServicesState extends State<MedicalServices> {
           : 'https://risknotifier.com/api/mobil/health/$_selectedDiseaseId');
 
       var request = http.MultipartRequest(
-        _selectedDiseaseId == null ? 'POST' : 'PUT',
+        _selectedDiseaseId == null ? 'POST' : 'POST',
         url,
       );
       request.headers['Authorization'] = 'Bearer $token';
@@ -126,6 +126,7 @@ class _MedicalServicesState extends State<MedicalServices> {
       } else {
         _showErrorSnackBar('Hastalık kaydedilirken bir hata oluştu.');
       }
+      _fetchHealthAndMedicData();
     } catch (e) {
       _showErrorSnackBar('Bir hata oluştu. Lütfen tekrar deneyin.');
     }
@@ -234,141 +235,160 @@ class _MedicalServicesState extends State<MedicalServices> {
     return Scaffold(
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            TextField(
-              controller: _diseaseController,
-              decoration: const InputDecoration(
-                labelText: 'Hastalık Adı',
-                labelStyle: TextStyle(
-                  color: Color.fromARGB(255, 28, 51, 69),
-                ),
-                border: OutlineInputBorder(),
-                enabledBorder: OutlineInputBorder(
-                  borderSide: BorderSide(
-                    color: Color.fromRGBO(221, 57, 13, 1),
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              TextField(
+                controller: _diseaseController,
+                decoration: const InputDecoration(
+                  labelText: 'Hastalık Adı',
+                  labelStyle: TextStyle(
+                    color: Color.fromARGB(255, 28, 51, 69),
                   ),
-                  borderRadius: BorderRadius.all(Radius.circular(10)),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderSide: BorderSide(
-                    color: Color.fromRGBO(221, 57, 13, 1),
+                  border: OutlineInputBorder(),
+                  enabledBorder: OutlineInputBorder(
+                    borderSide: BorderSide(
+                      color: Color.fromRGBO(221, 57, 13, 1),
+                    ),
+                    borderRadius: BorderRadius.all(Radius.circular(10)),
                   ),
-                  borderRadius: BorderRadius.all(Radius.circular(10)),
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            DropdownButtonFormField<String>(
-              value: _selectedRiskStatus,
-              decoration: const InputDecoration(
-                labelText: 'Risk Durumu',
-                border: OutlineInputBorder(),
-              ),
-              items: ['Yüksek', 'Orta', 'Düşük'].map((String value) {
-                return DropdownMenuItem<String>(
-                  value: value,
-                  child: Text(value),
-                );
-              }).toList(),
-              onChanged: (newValue) {
-                setState(() {
-                  _selectedRiskStatus = newValue;
-                });
-              },
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _addOrUpdateDisease,
-              style: ElevatedButton.styleFrom(
-                foregroundColor: const Color.fromARGB(255, 28, 51, 69),
-                backgroundColor: Colors.white,
-                textStyle: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-                side: const BorderSide(
-                  color: Color.fromARGB(255, 28, 51, 69),
-                ),
-              ),
-              child: Text(_selectedDiseaseId == null
-                  ? 'Hastalık Ekle'
-                  : 'Hastalık Güncelle'),
-            ),
-            const SizedBox(height: 24),
-            DropdownButtonFormField<String>(
-              value: _selectedDiseaseId,
-              decoration: const InputDecoration(
-                labelText: 'Hastalık Seçin',
-                border: OutlineInputBorder(),
-              ),
-              items: _diseases.map((disease) {
-                return DropdownMenuItem<String>(
-                  value: disease['id'].toString(),
-                  child: Text(disease['name']),
-                );
-              }).toList(),
-              onChanged: (newValue) {
-                setState(() {
-                  _selectedDiseaseId = newValue;
-                });
-              },
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _medicineNameController,
-              decoration: const InputDecoration(
-                labelText: 'İlaç Adı',
-                labelStyle: TextStyle(
-                  color: Color.fromARGB(255, 28, 51, 69),
-                ),
-                border: OutlineInputBorder(),
-                enabledBorder: OutlineInputBorder(
-                  borderSide: BorderSide(
-                    color: Color.fromRGBO(221, 57, 13, 1),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: BorderSide(
+                      color: Color.fromRGBO(221, 57, 13, 1),
+                    ),
+                    borderRadius: BorderRadius.all(Radius.circular(10)),
                   ),
-                  borderRadius: BorderRadius.all(Radius.circular(10)),
                 ),
-                focusedBorder: OutlineInputBorder(
-                  borderSide: BorderSide(
-                    color: Color.fromRGBO(221, 57, 13, 1),
+              ),
+              const SizedBox(height: 16),
+              DropdownButtonFormField<String>(
+                value: _selectedRiskStatus,
+                dropdownColor: const Color.fromARGB(255, 255, 255, 255),
+                decoration: const InputDecoration(
+                  hoverColor: Color.fromRGBO(221, 57, 13, 1),
+                  enabledBorder: OutlineInputBorder(
+                    borderSide: BorderSide(
+                      color: Color.fromRGBO(221, 57, 13, 1),
+                    ),
+                    borderRadius: BorderRadius.all(Radius.circular(10)),
                   ),
-                  borderRadius: BorderRadius.all(Radius.circular(10)),
+                  labelText: 'Risk Durumu',
+                  border: OutlineInputBorder(),
+                ),
+                items: ['Yüksek', 'Orta', 'Düşük'].map((String value) {
+                  return DropdownMenuItem<String>(
+                    value: value,
+                    child: Text(value),
+                  );
+                }).toList(),
+                onChanged: (newValue) {
+                  setState(() {
+                    _selectedRiskStatus = newValue;
+                  });
+                },
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: _addOrUpdateDisease,
+                style: ElevatedButton.styleFrom(
+                  foregroundColor: const Color.fromARGB(255, 28, 51, 69),
+                  backgroundColor: Colors.white,
+                  textStyle: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  side: const BorderSide(
+                    color: Color.fromARGB(255, 28, 51, 69),
+                  ),
+                ),
+                child: Text(_selectedDiseaseId == null
+                    ? 'Hastalık Ekle'
+                    : 'Hastalık Güncelle'),
+              ),
+              const SizedBox(height: 24),
+              DropdownButtonFormField<String>(
+                value: _selectedDiseaseId,
+                dropdownColor: const Color.fromARGB(255, 255, 255, 255),
+                decoration: const InputDecoration(
+                  labelText: 'Hastalık Seçin',
+                  border: OutlineInputBorder(),
+                  enabledBorder: OutlineInputBorder(
+                    borderSide: BorderSide(
+                      color: Color.fromRGBO(221, 57, 13, 1),
+                    ),
+                    borderRadius: BorderRadius.all(Radius.circular(10)),
+                  ),
+                  hoverColor: Color.fromRGBO(221, 57, 13, 1),
+                ),
+                items: _diseases.map((disease) {
+                  return DropdownMenuItem<String>(
+                    value: disease['id'].toString(),
+                    child: Text(disease['name']),
+                  );
+                }).toList(),
+                onChanged: (newValue) {
+                  setState(() {
+                    _selectedDiseaseId = newValue;
+                  });
+                },
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: _medicineNameController,
+                decoration: const InputDecoration(
+                  labelText: 'İlaç Adı',
+                  labelStyle: TextStyle(
+                    color: Color.fromARGB(255, 28, 51, 69),
+                  ),
+                  border: OutlineInputBorder(),
+                  enabledBorder: OutlineInputBorder(
+                    borderSide: BorderSide(
+                      color: Color.fromRGBO(221, 57, 13, 1),
+                    ),
+                    borderRadius: BorderRadius.all(Radius.circular(10)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: BorderSide(
+                      color: Color.fromRGBO(221, 57, 13, 1),
+                    ),
+                    borderRadius: BorderRadius.all(Radius.circular(10)),
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _selectedDiseaseId != null ? _addMedicine : null,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _selectedDiseaseId != null
-                    ? const Color.fromARGB(255, 28, 51, 69)
-                    : const Color.fromRGBO(221, 57, 13, 0.5),
-                foregroundColor: Colors.white,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
-                textStyle: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: _selectedDiseaseId != null ? _addMedicine : null,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _selectedDiseaseId != null
+                      ? const Color.fromARGB(255, 28, 51, 69)
+                      : const Color.fromRGBO(221, 57, 13, 0.5),
+                  foregroundColor: Colors.white,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
+                  textStyle: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  disabledBackgroundColor:
+                      const Color.fromRGBO(221, 57, 13, 0.5),
+                  disabledForegroundColor: Colors.white70,
                 ),
-                disabledBackgroundColor: const Color.fromRGBO(221, 57, 13, 0.5),
-                disabledForegroundColor: Colors.white70,
+                child: const Text('İlaç Ekle'),
               ),
-              child: const Text('İlaç Ekle'),
-            ),
-            const SizedBox(height: 24),
-            if (_addedMedicines.isNotEmpty) ...[
-              const Text(
-                'Eklenen İlaçlar:',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
+              const SizedBox(height: 24),
+              if (_addedMedicines.isNotEmpty) ...[
+                const Text(
+                  'Eklenen İlaçlar:',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 8),
-              Expanded(
-                child: ListView.builder(
+                const SizedBox(height: 8),
+                ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
                   itemCount: _addedMedicines.length,
                   itemBuilder: (context, index) {
                     final medicine = _addedMedicines[index];
@@ -381,19 +401,19 @@ class _MedicalServicesState extends State<MedicalServices> {
                     );
                   },
                 ),
+              ],
+              const SizedBox(height: 24),
+              const Text(
+                'Tüm Hastalıklar:',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-            ],
-            const SizedBox(height: 24),
-            const Text(
-              'Tüm Hastalıklar:',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Expanded(
-              child: ListView.builder(
+              const SizedBox(height: 8),
+              ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
                 itemCount: _diseases.length,
                 itemBuilder: (context, index) {
                   final disease = _diseases[index];
@@ -413,8 +433,8 @@ class _MedicalServicesState extends State<MedicalServices> {
                   );
                 },
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
