@@ -1,4 +1,8 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:http/io_client.dart'; // Bu satırı ekleyin
+import 'dart:convert';
 
 class Vehicle extends StatefulWidget {
   const Vehicle({super.key});
@@ -16,9 +20,7 @@ class _VehicleState extends State<Vehicle> {
     'Kamyon',
     'Otobüs'
   ];
-  final List<Map<String, String>> _addedVehicles = [];
-  int _currentPage = 0;
-  final int _vehiclesPerPage = 4;
+  final _storage = FlutterSecureStorage();
 
   @override
   void dispose() {
@@ -26,39 +28,60 @@ class _VehicleState extends State<Vehicle> {
     super.dispose();
   }
 
-  bool _isPlateNumberValid(String plateNumber) {
-    // Türkiye plakaları için basit bir doğrulama (örneğin "34 ABC 123" formatı)
-    final plateRegex = RegExp(r'^\d{2} [A-Z]{1,3} \d{1,4}$');
-    return plateRegex.hasMatch(plateNumber);
+  String _formatPlateNumber(String plateNumber) {
+    final plateRegex = RegExp(r'^(\d{2})([A-Z]+)(\d+)$');
+    final match = plateRegex.firstMatch(plateNumber.replaceAll(' ', ''));
+    if (match != null) {
+      return '${match.group(1)} ${match.group(2)} ${match.group(3)}';
+    }
+    return plateNumber;
   }
 
-  void _addVehicle() {
-    final String plateNumber = _plateNumberController.text;
+  Future<void> _addVehicle() async {
+    String plateNumber = _plateNumberController.text;
+    plateNumber = _formatPlateNumber(plateNumber);
 
     if (plateNumber.isNotEmpty && _selectedType != null) {
-      if (!_isPlateNumberValid(plateNumber)) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Geçersiz plaka formatı!')),
+      try {
+        String? authToken = await _storage.read(key: 'auth_token');
+
+        HttpClient client = HttpClient();
+        client.badCertificateCallback =
+            (X509Certificate cert, String host, int port) => true;
+
+        IOClient ioClient = IOClient(client);
+
+        final response = await ioClient.post(
+          Uri.parse('https://risknotifier.com/api/mobil/vehicle'),
+          headers: {
+            'Authorization': 'Bearer $authToken',
+          },
+          body: {
+            'plate': plateNumber,
+            'type': _selectedType!,
+          },
         );
-        return;
+
+        if (response.statusCode == 200) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Araç başarıyla eklendi!')),
+          );
+          setState(() {}); // Listi güncelle
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Araç eklenemedi: ${response.body}')),
+          );
+        }
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Bir hata oluştu: $e')),
+        );
       }
 
-      setState(() {
-        _addedVehicles.add({
-          'plate': plateNumber,
-          'type': _selectedType!,
-        });
-      });
-
-      // Formu sıfırlama
       _plateNumberController.clear();
       setState(() {
         _selectedType = null;
       });
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Araç başarıyla eklendi!')),
-      );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Lütfen tüm alanları doldurun.')),
@@ -66,9 +89,124 @@ class _VehicleState extends State<Vehicle> {
     }
   }
 
-  void _updateVehicle(int index) {
-    final vehicle = _addedVehicles[index];
-    _plateNumberController.text = vehicle['plate']!;
+  Future<void> _updateVehicle(int id) async {
+    String plateNumber = _plateNumberController.text;
+    plateNumber = _formatPlateNumber(plateNumber);
+
+    if (plateNumber.isNotEmpty && _selectedType != null) {
+      try {
+        String? authToken = await _storage.read(key: 'auth_token');
+
+        HttpClient client = HttpClient();
+        client.badCertificateCallback =
+            (X509Certificate cert, String host, int port) => true;
+
+        IOClient ioClient = IOClient(client);
+
+        final response = await ioClient.post(
+          Uri.parse('https://risknotifier.com/api/mobil/vehicle/$id'),
+          headers: {
+            'Authorization': 'Bearer $authToken',
+          },
+          body: {
+            'plate': plateNumber,
+            'type': _selectedType!,
+          },
+        );
+
+        if (response.statusCode == 200) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Araç başarıyla güncellendi!')),
+          );
+          setState(() {}); // Listi güncelle
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Araç güncellenemedi: ${response.body}')),
+          );
+        }
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Bir hata oluştu: $e')),
+        );
+      }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Lütfen tüm alanları doldurun.')),
+      );
+    }
+  }
+
+  Future<void> _deleteVehicle(int id) async {
+    try {
+      String? authToken = await _storage.read(key: 'auth_token');
+
+      HttpClient client = HttpClient();
+      client.badCertificateCallback =
+          (X509Certificate cert, String host, int port) => true;
+
+      IOClient ioClient = IOClient(client);
+
+      final response = await ioClient.delete(
+        Uri.parse('https://risknotifier.com/api/mobil/vehicle/$id'),
+        headers: {
+          'Authorization': 'Bearer $authToken',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Araç başarıyla silindi!')),
+        );
+        setState(() {}); // Listi güncelle
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Araç silinemedi: ${response.body}')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Bir hata oluştu: $e')),
+      );
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> _fetchVehicles() async {
+    try {
+      String? authToken = await _storage.read(key: 'auth_token');
+
+      HttpClient client = HttpClient();
+      client.badCertificateCallback =
+          (X509Certificate cert, String host, int port) => true;
+
+      IOClient ioClient = IOClient(client);
+
+      final response = await ioClient.get(
+        Uri.parse('https://risknotifier.com/api/mobil'),
+        headers: {
+          'Authorization': 'Bearer $authToken',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final vehicles = data['data'][0]['vehicle'] as List<dynamic>;
+        return vehicles.map((vehicle) {
+          return {
+            'id': vehicle['id'] as int,
+            'plate': vehicle['plate'] as String,
+            'type': vehicle['type'] as String,
+          };
+        }).toList();
+      } else {
+        throw Exception('Araçlar getirilemedi: ${response.body}');
+      }
+    } catch (e) {
+      throw Exception('Bir hata oluştu: $e');
+    }
+  }
+
+  void _showUpdateDialog(Map<String, dynamic> vehicle) {
+    _plateNumberController.text = vehicle['plate'];
     _selectedType = vehicle['type'];
 
     showDialog(
@@ -108,56 +246,27 @@ class _VehicleState extends State<Vehicle> {
           actions: [
             ElevatedButton(
               onPressed: () {
-                setState(() {
-                  _addedVehicles[index] = {
-                    'plate': _plateNumberController.text,
-                    'type': _selectedType!,
-                  };
-                });
-                _plateNumberController.clear();
-                _selectedType = null;
+                _updateVehicle(vehicle['id']);
                 Navigator.of(context).pop();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Araç başarıyla güncellendi!')),
-                );
               },
+              style: ElevatedButton.styleFrom(
+                foregroundColor: const Color.fromRGBO(221, 57, 13, 1),
+              ),
               child: const Text('Güncelle'),
             ),
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop();
               },
+              style: TextButton.styleFrom(
+                foregroundColor: const Color.fromARGB(255, 28, 51, 69),
+              ),
               child: const Text('İptal'),
             ),
           ],
         );
       },
     );
-  }
-
-  List<Map<String, String>> _getCurrentPageVehicles() {
-    final start = _currentPage * _vehiclesPerPage;
-    final end = start + _vehiclesPerPage;
-    return _addedVehicles.sublist(
-      start,
-      end > _addedVehicles.length ? _addedVehicles.length : end,
-    );
-  }
-
-  void _nextPage() {
-    if ((_currentPage + 1) * _vehiclesPerPage < _addedVehicles.length) {
-      setState(() {
-        _currentPage++;
-      });
-    }
-  }
-
-  void _previousPage() {
-    if (_currentPage > 0) {
-      setState(() {
-        _currentPage--;
-      });
-    }
   }
 
   @override
@@ -253,64 +362,42 @@ class _VehicleState extends State<Vehicle> {
             ),
             const SizedBox(height: 24),
             Expanded(
-              child: Column(
-                children: [
-                  Expanded(
-                    child: ListView.builder(
-                      itemCount: _getCurrentPageVehicles().length,
+              child: FutureBuilder<List<Map<String, dynamic>>>(
+                future: _fetchVehicles(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  } else if (snapshot.hasError) {
+                    return Center(
+                      child: Text('Hata: ${snapshot.error}'),
+                    );
+                  } else if (snapshot.hasData && snapshot.data!.isNotEmpty) {
+                    final vehicles = snapshot.data!;
+                    return ListView.builder(
+                      itemCount: vehicles.length,
                       itemBuilder: (context, index) {
-                        final vehicle = _getCurrentPageVehicles()[index];
-                        return GestureDetector(
-                          onTap: () => _updateVehicle(index),
-                          child: Card(
-                            margin: const EdgeInsets.symmetric(vertical: 8.0),
-                            elevation: 3,
-                            child: ListTile(
-                              title: Text('Plaka: ${vehicle['plate']}'),
-                              subtitle: Text('Türü: ${vehicle['type']}'),
+                        final vehicle = vehicles[index];
+                        return Card(
+                          margin: const EdgeInsets.symmetric(vertical: 8.0),
+                          elevation: 3,
+                          child: ListTile(
+                            title: Text('Plaka: ${vehicle['plate']}'),
+                            subtitle: Text('Türü: ${vehicle['type']}'),
+                            onTap: () => _showUpdateDialog(vehicle),
+                            trailing: IconButton(
+                              icon: const Icon(Icons.delete),
+                              onPressed: () => _deleteVehicle(vehicle['id']),
                             ),
                           ),
                         );
                       },
-                    ),
-                  ),
-                  if (_addedVehicles.length > 4)
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        ElevatedButton.icon(
-                          onPressed: _previousPage,
-                          icon: const Icon(Icons.arrow_back),
-                          label: const Text('Önceki'),
-                          style: ElevatedButton.styleFrom(
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                          ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                          child: Text(
-                            'Sayfa ${_currentPage + 1}',
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                            ),
-                          ),
-                        ),
-                        ElevatedButton.icon(
-                          onPressed: _nextPage,
-                          icon: const Icon(Icons.arrow_forward),
-                          label: const Text('Sonraki'),
-                          style: ElevatedButton.styleFrom(
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                ],
+                    );
+                  } else {
+                    return const Center(
+                      child: Text('Henüz araç eklenmemiş.'),
+                    );
+                  }
+                },
               ),
             ),
           ],

@@ -6,7 +6,7 @@ Widget CircleNavbar(int currentIndex, Function(int) onTap) {
   return CircleNavBar(
     activeIndex: currentIndex,
     activeIcons: const [
-      Icon(Icons.search, color: Colors.white),
+      Icon(Icons.family_restroom, color: Colors.white),
       Icon(Icons.person, color: Colors.white),
       Icon(Icons.home, color: Colors.white),
       Icon(Icons.medical_services, color: Colors.white), // İlaç Ekle Icon
@@ -15,7 +15,7 @@ Widget CircleNavbar(int currentIndex, Function(int) onTap) {
     inactiveIcons: const [
       DefaultTextStyle(
         style: TextStyle(color: Colors.white),
-        child: Text("Çıkış"),
+        child: Text("Aile Üyesi"),
       ),
       DefaultTextStyle(
         style: TextStyle(color: Colors.white),

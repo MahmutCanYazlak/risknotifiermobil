@@ -4,15 +4,16 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:risknotifier/features/riskNotifier/presentation/views/directions_car.dart';
 import 'package:risknotifier/features/riskNotifier/presentation/views/emergency_kit_modal.dart';
+import 'package:risknotifier/features/riskNotifier/presentation/views/family.dart';
 import 'package:risknotifier/features/riskNotifier/presentation/views/post_earthquake_help_modal.dart';
 import 'package:risknotifier/features/riskNotifier/presentation/views/profile_edit.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:risknotifier/features/riskNotifier/presentation/views/sign_in.dart';
+import 'package:http/http.dart' as http;
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../widgets/circle_navbar.dart';
 import 'medical_services.dart';
-import 'search.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -28,13 +29,15 @@ class _HomeState extends State<Home> {
   int _currentIndex = 2;
   int _switchValue = 0;
 
+  final FlutterSecureStorage _storage = const FlutterSecureStorage();
   final List<String> titles = [
-    'Çıkış',
+    'Aile Üyesi Ekle',
     'Profil',
     'Ana Sayfa',
     'İlaç Ekle',
     'Araç Ekle',
   ];
+
   void _showSignOutConfirmation(BuildContext context) async {
     showDialog(
       context: context,
@@ -42,46 +45,34 @@ class _HomeState extends State<Home> {
         return AlertDialog(
           title: const Text('Çıkış Yap'),
           content: Column(
-            mainAxisSize: MainAxisSize
-                .min, // İçeriğin mümkün olduğunca küçük olmasını sağlar
+            mainAxisSize: MainAxisSize.min,
             children: <Widget>[
               Image.asset(
                 'assets/images/logo.png',
-                width: 100, // Logo genişliği
-                height: 100, // Logo yüksekliği
-              ), // Logo resmi
-              const SizedBox(height: 20), // Resim ile metin arasında boşluk
+                width: 100,
+                height: 100,
+              ),
+              const SizedBox(height: 20),
               const Text('Çıkış yapmak istediğinize emin misiniz?'),
             ],
           ),
           actions: <Widget>[
             TextButton(
               onPressed: () {
-                Navigator.of(context).pop(); // Diyalogu kapat
+                Navigator.of(context).pop();
               },
               style: TextButton.styleFrom(
-                foregroundColor:
-                    const Color.fromRGBO(221, 57, 13, 1), // Buton metin rengi
+                foregroundColor: const Color.fromRGBO(221, 57, 13, 1),
               ),
               child: const Text('Hayır',
                   style: TextStyle(color: Color.fromRGBO(221, 57, 13, 1))),
             ),
             TextButton(
               onPressed: () async {
-                // SharedPreferences'dan token'ı temizle
-                SharedPreferences prefs = await SharedPreferences.getInstance();
-                await prefs.remove('token');
-                // Giriş sayfasına yönlendir
-                Navigator.pushAndRemoveUntil(
-                  // ignore: use_build_context_synchronously
-                  context,
-                  MaterialPageRoute(builder: (context) => const SignIn()),
-                  (Route<dynamic> route) => false,
-                );
+                await _signOut();
               },
               style: TextButton.styleFrom(
-                foregroundColor:
-                    const Color.fromRGBO(221, 57, 13, 1), // Buton metin rengi
+                foregroundColor: const Color.fromRGBO(221, 57, 13, 1),
               ),
               child: const Text('Evet',
                   style: TextStyle(color: Color.fromARGB(255, 28, 51, 69))),
@@ -90,6 +81,37 @@ class _HomeState extends State<Home> {
         );
       },
     );
+  }
+
+  Future<void> _signOut() async {
+    String? token = await _storage.read(key: 'token');
+
+    if (token != null) {
+      final response = await http.post(
+        Uri.parse('https://risknotifier.com/api/logout'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        await _storage.delete(key: 'token');
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => const SignIn()),
+          (Route<dynamic> route) => false,
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Çıkış işlemi başarısız oldu')),
+        );
+      }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: const Text('Token bulunamadı')),
+      );
+    }
   }
 
   @override
@@ -216,11 +238,17 @@ class _HomeState extends State<Home> {
     );
   }
 
+  void _onTabTapped(int index) {
+    setState(() {
+      _currentIndex = index;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
     List<Widget> bodyItems = [
-      const SearchScreen(),
+      const FamilyScreen(), // Aile Üyesi Ekle ekranı
       const ProfileEditPage(),
       SingleChildScrollView(
         child: Padding(
@@ -384,9 +412,10 @@ class _HomeState extends State<Home> {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(Icons.door_front_door_outlined),
           onPressed: () {
-            Navigator.of(context).pop();
+            Navigator.of(context)
+                .push(MaterialPageRoute(builder: (context) => const SignIn()));
           },
         ),
         title: Text(
@@ -402,16 +431,7 @@ class _HomeState extends State<Home> {
       body: bodyItems[_currentIndex],
       bottomNavigationBar: CircleNavbar(
         _currentIndex,
-        (index) {
-          if (index == 0) {
-            // Assuming the 'Çıkış' tab is at index 0
-            _showSignOutConfirmation(context);
-          } else {
-            setState(() {
-              _currentIndex = index;
-            });
-          }
-        },
+        _onTabTapped,
       ),
     );
   }
