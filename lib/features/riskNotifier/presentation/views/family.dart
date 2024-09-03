@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:http/io_client.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'dart:convert';
 
@@ -38,11 +39,18 @@ class _FamilyScreenState extends State<FamilyScreen> {
     super.dispose();
   }
 
+  // Bu metodu sınıfınıza ekleyin
   HttpClient _createHttpClient() {
     final httpClient = HttpClient()
       ..badCertificateCallback =
           (X509Certificate cert, String host, int port) => true;
     return httpClient;
+  }
+
+  // createIOClient metodu
+  IOClient createIOClient() {
+    var httpClient = _createHttpClient();
+    return IOClient(httpClient);
   }
 
   String safeValue(String? value) => value?.isNotEmpty == true ? value! : '';
@@ -57,31 +65,28 @@ class _FamilyScreenState extends State<FamilyScreen> {
       }
 
       try {
-        final client = HttpClientAdapter(_createHttpClient());
-        var request = http.MultipartRequest(
-          'POST',
-          Uri.parse('https://risknotifier.com/api/mobil/relative'),
-        );
+        var client = createIOClient();
+        http.MultipartRequest request;
+
+        // Güncelleme işlemi mi, yeni kayıt ekleme mi kontrol ediliyor
+        if (_editingRelativeId != null) {
+          // Güncelleme işlemi için URL'yi ID ile birlikte oluşturuyoruz
+          var url = Uri.parse(
+              'https://risknotifier.com/api/mobil/relative/$_editingRelativeId');
+          request = http.MultipartRequest('PUT', url);
+        } else {
+          // Yeni kayıt ekleme işlemi
+          var url = Uri.parse('https://risknotifier.com/api/mobil/relative');
+          request = http.MultipartRequest('POST', url);
+        }
 
         request.headers['Authorization'] = 'Bearer $token';
 
-        // Check for null or empty values
-        if (_nameController.text.isEmpty ||
-            _degreeController.text.isEmpty ||
-            _phoneController.text.isEmpty ||
-            _emailController.text.isEmpty) {
-          _showSnackBar('Lütfen tüm alanları doldurun');
-          return;
-        }
-
+        // Form alanları dolduruluyor
         request.fields['name'] = _nameController.text;
         request.fields['degree'] = _degreeController.text;
         request.fields['phone'] = _phoneController.text;
         request.fields['email'] = _emailController.text;
-
-        if (_editingRelativeId != null) {
-          request.fields['id'] = _editingRelativeId!;
-        }
 
         var response = await client.send(request);
         var responseBody = await http.Response.fromStream(response);
@@ -392,14 +397,14 @@ class _FamilyScreenState extends State<FamilyScreen> {
                             IconButton(
                               icon: const Icon(Icons.edit, color: Colors.blue),
                               onPressed: () {
-                                // Fill the form with the selected relative's data
+                                // Formu seçili kaydın bilgileriyle doldurun
                                 _nameController.text = relative['name'] ?? '';
                                 _degreeController.text =
                                     relative['degree'] ?? '';
                                 _phoneController.text = relative['phone'] ?? '';
                                 _emailController.text = relative['email'] ?? '';
 
-                                // Set the editing state
+                                // Düzenleme durumunu ayarlayın
                                 setState(() {
                                   _editingRelativeId =
                                       relative['id'].toString();

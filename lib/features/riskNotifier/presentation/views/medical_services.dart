@@ -26,7 +26,6 @@ class _MedicalServicesState extends State<MedicalServices> {
   @override
   void initState() {
     super.initState();
-
     _fetchHealthAndMedicData();
   }
 
@@ -67,71 +66,68 @@ class _MedicalServicesState extends State<MedicalServices> {
           });
         }
       } else {
-        print('Hata: ${response.statusCode}');
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Veriler yüklenirken bir hata oluştu.')),
-        );
+        _showErrorSnackBar('Veriler yüklenirken bir hata oluştu.');
       }
     } catch (e) {
-      print('Hata: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('Bir hata oluştu. Lütfen tekrar deneyin.')),
-      );
+      _showErrorSnackBar('Bir hata oluştu. Lütfen tekrar deneyin.');
     }
   }
 
-  Future<void> _addDisease() async {
+  Future<void> _addOrUpdateDisease() async {
     final token = await _storage.read(key: 'auth_token');
     final diseaseName = _diseaseController.text;
 
-    if (diseaseName.isNotEmpty) {
-      try {
-        final client = await _getHttpClient();
+    if (diseaseName.isEmpty) return;
 
-        var request = http.MultipartRequest(
-          'POST',
-          Uri.parse('https://risknotifier.com/api/mobil/health'),
-        );
-        request.headers['Authorization'] = 'Bearer $token';
-        request.headers['Content-Type'] = 'multipart/form-data';
+    try {
+      final client = await _getHttpClient();
+      final Uri url = Uri.parse(_selectedDiseaseId == null
+          ? 'https://risknotifier.com/api/mobil/health'
+          : 'https://risknotifier.com/api/mobil/health/$_selectedDiseaseId');
 
-        request.fields['risk_status'] = _selectedRiskStatus!;
-        request.fields['name'] = diseaseName;
+      var request = http.MultipartRequest(
+        _selectedDiseaseId == null ? 'POST' : 'PUT',
+        url,
+      );
+      request.headers['Authorization'] = 'Bearer $token';
+      request.headers['Content-Type'] = 'multipart/form-data';
 
-        final response = await client.send(request);
+      request.fields['risk_status'] = _selectedRiskStatus!;
+      request.fields['name'] = diseaseName;
 
-        response.stream.transform(utf8.decoder).listen((value) {
-          print('Response body: $value');
-          final jsonResponse = jsonDecode(value);
-          setState(() {
+      final response = await client.send(request);
+
+      response.stream.transform(utf8.decoder).listen((value) {
+        final jsonResponse = jsonDecode(value);
+        setState(() {
+          if (_selectedDiseaseId != null) {
+            final index =
+                _diseases.indexWhere((d) => d['id'] == _selectedDiseaseId);
+            if (index != -1) {
+              _diseases[index]['name'] = diseaseName;
+              _diseases[index]['risk_status'] = _selectedRiskStatus;
+            }
+          } else {
             _selectedDiseaseId = jsonResponse['id'].toString();
             _diseases.add({
               'id': _selectedDiseaseId,
               'name': diseaseName,
               'risk_status': _selectedRiskStatus,
             });
-            _diseaseController.clear();
-          });
+          }
+          _clearForm();
         });
+      });
 
-        if (response.statusCode == 200) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Hastalık başarıyla eklendi!')),
-          );
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-                content: Text('Hastalık eklenirken bir hata oluştu.')),
-          );
-        }
-      } catch (e) {
-        print('Hata: $e');
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content: Text('Bir hata oluştu. Lütfen tekrar deneyin.')),
-        );
+      if (response.statusCode == 200) {
+        _showSuccessSnackBar(_selectedDiseaseId == null
+            ? 'Hastalık başarıyla eklendi!'
+            : 'Hastalık başarıyla güncellendi!');
+      } else {
+        _showErrorSnackBar('Hastalık kaydedilirken bir hata oluştu.');
       }
+    } catch (e) {
+      _showErrorSnackBar('Bir hata oluştu. Lütfen tekrar deneyin.');
     }
   }
 
@@ -139,48 +135,38 @@ class _MedicalServicesState extends State<MedicalServices> {
     final token = await _storage.read(key: 'auth_token');
     final String medicineName = _medicineNameController.text;
 
-    if (medicineName.isNotEmpty && _selectedDiseaseId != null) {
-      try {
-        final client = await _getHttpClient();
+    if (medicineName.isEmpty || _selectedDiseaseId == null) return;
 
-        var request = http.MultipartRequest(
-          'POST',
-          Uri.parse('https://risknotifier.com/api/mobil/medical'),
-        );
-        request.headers['Authorization'] = 'Bearer $token';
-        request.headers['Content-Type'] = 'multipart/form-data';
+    try {
+      final client = await _getHttpClient();
 
-        request.fields['health_info_id'] = _selectedDiseaseId!;
-        request.fields['name'] = medicineName;
+      var request = http.MultipartRequest(
+        'POST',
+        Uri.parse('https://risknotifier.com/api/mobil/medical'),
+      );
+      request.headers['Authorization'] = 'Bearer $token';
+      request.headers['Content-Type'] = 'multipart/form-data';
 
-        final response = await client.send(request);
+      request.fields['health_info_id'] = _selectedDiseaseId!;
+      request.fields['name'] = medicineName;
 
-        response.stream.transform(utf8.decoder).listen((value) {
-          print('Response body: $value');
+      final response = await client.send(request);
+
+      response.stream.transform(utf8.decoder).listen((value) {
+        // Response işlemleri
+      });
+
+      if (response.statusCode == 200) {
+        setState(() {
+          _addedMedicines.add({'name': medicineName});
+          _medicineNameController.clear();
         });
-
-        if (response.statusCode == 200) {
-          setState(() {
-            _addedMedicines.add({
-              'name': medicineName,
-            });
-            _medicineNameController.clear();
-          });
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('İlaç başarıyla eklendi!')),
-          );
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('İlaç eklenirken bir hata oluştu.')),
-          );
-        }
-      } catch (e) {
-        print('Hata: $e');
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content: Text('Bir hata oluştu. Lütfen tekrar deneyin.')),
-        );
+        _showSuccessSnackBar('İlaç başarıyla eklendi!');
+      } else {
+        _showErrorSnackBar('İlaç eklenirken bir hata oluştu.');
       }
+    } catch (e) {
+      _showErrorSnackBar('Bir hata oluştu. Lütfen tekrar deneyin.');
     }
   }
 
@@ -201,21 +187,39 @@ class _MedicalServicesState extends State<MedicalServices> {
         setState(() {
           _diseases.removeWhere((disease) => disease['id'] == diseaseId);
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Hastalık başarıyla silindi!')),
-        );
+        _showSuccessSnackBar('Hastalık başarıyla silindi!');
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Hastalık silinirken bir hata oluştu.')),
-        );
+        _showErrorSnackBar('Hastalık silinirken bir hata oluştu.');
       }
     } catch (e) {
-      print('Hata: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('Bir hata oluştu. Lütfen tekrar deneyin.')),
-      );
+      _showErrorSnackBar('Bir hata oluştu. Lütfen tekrar deneyin.');
     }
+  }
+
+  void _editDisease(Map<String, dynamic> disease) {
+    setState(() {
+      _selectedDiseaseId = disease['id'].toString();
+      _diseaseController.text = disease['name'];
+      _selectedRiskStatus = disease['risk_status'];
+    });
+  }
+
+  void _clearForm() {
+    _diseaseController.clear();
+    _selectedDiseaseId = null;
+    _selectedRiskStatus = 'Yüksek';
+  }
+
+  void _showErrorSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+  }
+
+  void _showSuccessSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
   }
 
   @override
@@ -256,8 +260,27 @@ class _MedicalServicesState extends State<MedicalServices> {
               ),
             ),
             const SizedBox(height: 16),
+            DropdownButtonFormField<String>(
+              value: _selectedRiskStatus,
+              decoration: const InputDecoration(
+                labelText: 'Risk Durumu',
+                border: OutlineInputBorder(),
+              ),
+              items: ['Yüksek', 'Orta', 'Düşük'].map((String value) {
+                return DropdownMenuItem<String>(
+                  value: value,
+                  child: Text(value),
+                );
+              }).toList(),
+              onChanged: (newValue) {
+                setState(() {
+                  _selectedRiskStatus = newValue;
+                });
+              },
+            ),
+            const SizedBox(height: 16),
             ElevatedButton(
-              onPressed: _addDisease,
+              onPressed: _addOrUpdateDisease,
               style: ElevatedButton.styleFrom(
                 foregroundColor: const Color.fromARGB(255, 28, 51, 69),
                 backgroundColor: Colors.white,
@@ -269,7 +292,9 @@ class _MedicalServicesState extends State<MedicalServices> {
                   color: Color.fromARGB(255, 28, 51, 69),
                 ),
               ),
-              child: const Text('Hastalık Ekle'),
+              child: Text(_selectedDiseaseId == null
+                  ? 'Hastalık Ekle'
+                  : 'Hastalık Güncelle'),
             ),
             const SizedBox(height: 24),
             DropdownButtonFormField<String>(
@@ -383,6 +408,7 @@ class _MedicalServicesState extends State<MedicalServices> {
                         onPressed: () =>
                             _deleteDisease(disease['id'].toString()),
                       ),
+                      onTap: () => _editDisease(disease),
                     ),
                   );
                 },
